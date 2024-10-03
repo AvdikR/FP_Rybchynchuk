@@ -1,0 +1,29 @@
+module Main (main) where
+
+main :: IO ()
+main = do
+    putStrLn "Lab 5 | Vadym Rybchynchuk PP-41"
+    askLessQuestions 0 100
+
+intToString :: Int -> String
+intToString n = show n
+
+askLessQuestions :: Int -> Int -> IO ()
+askLessQuestions min max = do
+    putStrLn ("Less than " ++ intToString ((min + max) `div` 2) ++ "? (y/n)")
+    line <- getLine
+    if line == "n"
+        then askLessQuestions ((min + max) `div` 2) max
+    else if line == "y"
+        then askMoreQuestions min ((min + max) `div` 2)
+    else putStrLn "Since you can only enter y or n, I'll assume I guessed right."
+
+askMoreQuestions :: Int -> Int -> IO ()
+askMoreQuestions min max = do
+    putStrLn ("More than " ++ intToString ((min + max) `div` 2) ++ "? (y/n)")
+    line <- getLine
+    if line == "y"
+        then askMoreQuestions ((min + max) `div` 2) max
+    else if line == "n"
+        then askLessQuestions min ((min + max) `div` 2)
+    else putStrLn "Since you can only enter y or n, I'll assume I guessed right."
