@@ -1,0 +1,8 @@
+digraph YCombinator {
+1 [label="Result"];
+2 [label="f(5)"];
+3 [label="10"];
+1 -> 2 [label=" computes"]
+2 -> 3 [label=" result"]
+
+}

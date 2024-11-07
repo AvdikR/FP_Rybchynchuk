@@ -1,0 +1,50 @@
+module Main (main) where
+
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import System.IO (withFile, IOMode(WriteMode), hSetEncoding, utf8, stdout, hSetBuffering, BufferMode(LineBuffering))
+
+data Expr = GCD Expr Expr | Num Int
+
+instance Show Expr where
+    show (GCD a b) = "GCD (" ++ show a ++ ") (" ++ show b ++ ")"
+    show (Num n) = show n
+
+-- Обчислення GCD
+eval :: Expr -> Int
+eval (GCD a b) = gcd (eval a) (eval b)
+eval (Num n) = n
+
+-- Створення графа у форматі DOT
+exportGraph :: Expr -> [Expr] -> Text
+exportGraph expr steps = 
+    T.concat [T.pack "digraph GCDGraph {\n", nodesFormat, edgesFormat, T.pack "\n}\n"]
+  where
+    nodes = expr : steps  -- Додаємо початковий вираз та редукції
+    nodesFormat = T.unlines [T.pack (show i) <> T.pack " [label=\"" <> T.pack (show node) <> T.pack "\"];" | (i, node) <- zip [1..] nodes]
+    edgesFormat = T.unlines [T.pack "1 -> " <> T.pack (show (i + 1)) <> T.pack " [label=\"reducing\"];" | i <- [1..length steps - 1]]
+
+-- Графічне представлення GCD
+main :: IO ()
+main = do
+    -- Встановлюємо кодування для stdout на UTF-8
+    hSetEncoding stdout utf8
+    hSetBuffering stdout LineBuffering
+
+    let expr = GCD (Num 9) (Num 10)
+    putStrLn ("Before reduction: " ++ show expr)
+
+    let steps = [GCD (Num 10) (Num (9 `mod` 10)),   -- GCD 10 (9 mod 10)
+                 GCD (Num 9) (Num 1),            -- GCD 9 1
+                 Num 1]                           -- GCD 1 0 (base case)
+
+    let reducedExpr = eval expr
+    putStrLn ("After reduction: " ++ show reducedExpr)
+
+    -- Експортуємо граф у файл
+    let graphData = exportGraph expr steps
+    withFile "gcd_graph.dot" WriteMode $ \handle -> do
+        TIO.hPutStr handle graphData
+
+    putStrLn "Graph representation is saved in gcd_graph.dot"

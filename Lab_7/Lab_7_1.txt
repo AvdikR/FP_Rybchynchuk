@@ -1,0 +1,64 @@
+module Main where
+
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import System.IO (withFile, IOMode(WriteMode), hSetEncoding, utf8, stdout, hSetBuffering, BufferMode(LineBuffering))
+
+type Node = Int
+type Label = String
+type Edge = (Node, Node, Label)
+
+-- Функція, що виконує обчислення Y-комбінатора
+calculateYCombinator :: (Int -> Int) -> Int -> (Int, [(Node, Label)], [Edge])
+calculateYCombinator f x =
+    let
+        -- Кроки обчислення
+        step1 = f x
+        step2 = f step1
+
+        -- Опис графа
+        nodes = [(1, "f"), (2, "f x"), (3, "result = " ++ show step1), (4, "result = " ++ show step2)]
+        edges = [(1, 2, "apply"), (2, 3, "intermediate result"), (2, 4, "final result")]
+    in
+        (step2, nodes, edges)
+
+-- Початковий граф Y-комбінатора
+initialNodes :: [(Node, Label)]
+initialNodes =
+    [(1, "Y"), (2, "λf.(λx.f (x x)) (λx.f (x x))"), (3, "f"), (4, "x x")]
+
+initialEdges :: [Edge]
+initialEdges =
+    [(1, 2, " expansion"), (2, 3, " applies f"), (3, 4, " recurse")]
+
+-- Функція для експорту графа у форматі DOT
+exportGraph :: [(Node, Label)] -> [Edge] -> Text
+exportGraph nodes edges = 
+    T.concat [T.pack "digraph YCombinator {\n", nodesFormat, edgesFormat, T.pack "\n}\n"]
+  where
+    nodesFormat = T.unlines [T.pack (show node) <> T.pack " [label=\"" <> T.pack label <> T.pack "\"];" | (node, label) <- nodes]
+    edgesFormat = T.unlines [T.concat [T.pack (show from), T.pack " -> ", T.pack (show to), T.pack " [label=\"" <> T.pack label <> T.pack "\"]"] | (from, to, label) <- edges]
+
+-- Функція для збереження графа у файл з UTF-8 кодуванням
+saveGraph :: FilePath -> [(Node, Label)] -> [Edge] -> IO ()
+saveGraph filePath nodes edges = 
+    withFile filePath WriteMode $ \handle -> do
+        hSetEncoding handle utf8
+        TIO.hPutStr handle (exportGraph nodes edges)
+
+main :: IO ()
+main = do
+    putStrLn "Lab 7 | Vadym Rybchynchuk PP-41"
+    -- Встановлюємо кодування для stdout на UTF-8
+    hSetEncoding stdout utf8
+    hSetBuffering stdout LineBuffering
+
+    -- Обчислення через Y-комбінатор
+    let f x = x + 1  -- Задаємо функцію для обчислення
+    let (finalResult, calculationNodes, calculationEdges) = calculateYCombinator f 4  -- Обчислюємо для 4
+
+    -- Зберігаємо графи
+    saveGraph "yCombinator_initial.dot" initialNodes initialEdges
+    saveGraph "yCombinator_calculation.dot" calculationNodes calculationEdges
+    putStrLn "Graphs for reductions are saved in files: yCombinator_initial.dot, yCombinator_calculation.dot"

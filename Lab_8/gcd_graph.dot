@@ -1,0 +1,16 @@
+digraph GCDGraph {
+1 [label="gcd(9, 10)"];
+2 [label="gcd(10, 9 mod 10)"];
+3 [label="gcd(10, 9)"];
+4 [label="gcd(9, 10 mod 9)"];
+5 [label="gcd(9, 1)"];
+6 [label="gcd(1, 0)"];
+7 [label="1"];
+1 -> 2 [label=" reducing"]
+2 -> 3 [label=" reversion"]
+3 -> 4 [label=" reducing"]
+4 -> 5 [label=" gcd(9, 1)"]
+5 -> 6 [label=" reducing"]
+6 -> 7 [label=" max"]
+
+}

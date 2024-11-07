@@ -1,0 +1,63 @@
+module Main where
+
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import System.IO (withFile, IOMode(WriteMode), hSetEncoding, utf8, stdout, hSetBuffering, BufferMode(LineBuffering))
+
+type Node = Int
+type Label = String
+type Edge = (Node, Node, Label)
+
+-- Початковий граф Y-комбінатора
+initialNodes :: [(Node, Label)]
+initialNodes =
+    [(1, "Y"), (2, "λf.(λx.f (x x)) (λx.f (x x))"), (3, "f"), (4, "x x")]
+
+initialEdges :: [Edge]
+initialEdges =
+    [(1, 2, " expansion"), (2, 3, " applies f"), (3, 4, " recurse")]
+
+-- Перший крок редукції
+step1Nodes :: [(Node, Label)]
+step1Nodes =
+    [(1, "f"), (2, "(λx.f (x x)) (λx.f (x x))"), (3, "f"), (4, "x x")]
+
+step1Edges :: [Edge]
+step1Edges =
+    [(1, 2, " application"), (2, 3, " applies f"), (3, 4, " recurse")]
+
+-- Другий крок редукції
+step2Nodes :: [(Node, Label)]
+step2Nodes =
+    [(1, "f"), (2, "f ((λx.f (x x)) (λx.f (x x)))"), (3, "x x")]
+
+step2Edges :: [Edge]
+step2Edges =
+    [(1, 2, " application"), (2, 3, " recurse")]
+
+-- Функція для експорту графа у форматі DOT
+exportGraph :: [(Node, Label)] -> [Edge] -> Text
+exportGraph nodes edges = 
+    T.concat [T.pack "digraph YCombinator {\n", nodesFormat, edgesFormat, T.pack "\n}\n"]
+  where
+    nodesFormat = T.unlines [T.pack (show node) <> T.pack " [label=\"" <> T.pack label <> T.pack "\"];" | (node, label) <- nodes]
+    edgesFormat = T.unlines [T.concat [T.pack (show from), T.pack " -> ", T.pack (show to), T.pack " [label=\"" <> T.pack label <> T.pack "\"]"] | (from, to, label) <- edges]
+
+-- Функція для збереження графа у файл з UTF-8 кодуванням
+saveGraph :: FilePath -> [(Node, Label)] -> [Edge] -> IO ()
+saveGraph filePath nodes edges = 
+    withFile filePath WriteMode $ \handle -> do
+        hSetEncoding handle utf8
+        TIO.hPutStr handle (exportGraph nodes edges)
+
+main :: IO ()
+main = do
+    putStrLn "Lab 7 | Vadym Rybchynchuk PP-41"
+    -- Встановлюємо кодування для stdout на UTF-8
+    hSetEncoding stdout utf8
+    hSetBuffering stdout LineBuffering
+    saveGraph "yCombinator_initial.dot" initialNodes initialEdges
+    saveGraph "yCombinator_step1.dot" step1Nodes step1Edges
+    saveGraph "yCombinator_step2.dot" step2Nodes step2Edges
+    putStrLn "Graphs for reductions are saved in files: yCombinator_initial.dot, yCombinator_step1.dot, yCombinator_step2.dot"

@@ -1,0 +1,14 @@
+digraph YCombinator {
+1 [label="Y"];
+2 [label="λf.(λx.f (x x)) (λx.f (x x))"];
+3 [label="f"];
+4 [label="x x"];
+5 [label="λx.f (x x)"];
+6 [label="x x"];
+1 -> 2 [label=" expansion"]
+2 -> 3 [label=" applies f"]
+3 -> 4 [label=" recurse"]
+4 -> 5 [label=" apply λ"]
+5 -> 6 [label=" apply x x"]
+
+}
